@@ -1,0 +1,6 @@
+2023-05-10 08:49:55,123 - __main__ - INFO - Solving equation: 8 * X^0 - 6 * X^1 + 0 * X^2 - 5.6 * X^3 +5.55*X^3 = 3 * X^0
+2023-05-10 09:10:30,570 - __main__ - INFO - Solving equation: 8 * X^0 - 6 * X^1 + 0 * X^2 - 5.6 * X^3  = 3 * X^0
+2023-05-10 09:10:39,872 - __main__ - INFO - Solving equation: 8 * X^0 - 6 * X^1 + 0 * X^2 - 5.6 * X^3 +5.55*X^3 = 3 * X^0
+2023-05-10 09:17:27,167 - __main__ - INFO - Solving equation: 5 * X^0 + 4 * X^1 - 9.3 * X^2 = 1 * X^0
+2023-05-10 09:20:10,862 - __main__ - INFO - Solving equation: 5 * X^0 + 4 * X^1 - 9.3 * X^2 = 1 * X^0
+2023-05-10 09:20:25,065 - __main__ - INFO - Solving equation: 8 * X^0 - 6 * X^1 + 0 * X^2 - 5.6 * X^3 +5.55*X^4 = 3 * X^0
