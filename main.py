@@ -34,9 +34,9 @@ def parse_args():
     if len(args.equation) != 1:
         parser.error("Invalid number of arguments. Provide either a single polynomial equation or 'visual' to access visual mode.")
 
-    equation = args.equation[0]
+    equation = ' '.join(args.equation)
     if equation.lower() != 'visual':
-        if not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+\s*)+=\s*([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^0\s*)+$', equation):
+        if not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+\s*)+=\s*([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+\s*)+$', equation):
             parser.error("Invalid polynomial equation. Please provide a valid polynomial equation.")
 
         # Extract exponents from the left side of the equation
@@ -49,6 +49,54 @@ def parse_args():
 
     return equation
 
+def print_reduced_form(equation):
+    # Initialize an empty dictionary
+    terms = {}
+
+    # Split the equation into left and right side
+    left_side, right_side = equation.split('=')
+
+    # Split the sides into terms
+    left_terms = re.findall(r'([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+)', left_side)
+    right_terms = re.findall(r'([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+)', right_side)
+
+    # Parse left terms
+    for term in left_terms:
+        term = term[0]  # Convert the tuple to string
+        sign, coef, _, exp = re.findall(r'([+-])?\s*(\d+(\.\d+)?)\s*\*\s*X\^(\d+)', term.strip())[0]
+        coef = float(coef)
+        exp = int(exp)
+
+        if sign == '-':
+            coef *= -1
+
+        # Add the coef to the corresponding exp in the terms dictionary
+        terms[exp] = terms.get(exp, 0) + coef
+
+    # Parse right terms
+    for term in right_terms:
+        term = term[0]  # Convert the tuple to string
+        sign, coef, _, exp = re.findall(r'([+-])?\s*(\d+(\.\d+)?)\s*\*\s*X\^(\d+)', term.strip())[0]
+        coef = float(coef)
+        exp = int(exp)
+
+        if sign != '-':
+            coef *= -1
+
+        # Subtract the coef for the corresponding exp in the terms dictionary
+        terms[exp] = terms.get(exp, 0) + coef
+
+    # Print the reduced form
+    reduced_form = 'Reduced form: '
+    for exp, coef in sorted(terms.items()):
+        if coef != 0:
+            reduced_form += f'{coef} * X^{exp} + '
+
+    # Remove the last ' + ' and add ' = 0'
+    reduced_form = reduced_form[:-3] + ' = 0'
+
+    print(reduced_form)
+
 
 def main():
     logger = setup_logger()
@@ -56,6 +104,8 @@ def main():
 
     logger.info(f'Solving equation: {equation}')
     # Here, you will add calls to your other functions for solving the polynomial
+    print_reduced_form(equation)
+
 
 if __name__ == "__main__":
     main()
