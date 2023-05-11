@@ -5,6 +5,19 @@ import argparse
 import logging
 import sys
 
+def rounded_solution(solution):
+    rounded_value = round(solution, 4)
+    if rounded_value.is_integer():
+        return(int(rounded_value))
+    else:
+        return(rounded_value)
+
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+
 def setup_logger():
     # Create a custom logger
     logger = logging.getLogger(__name__)
@@ -96,6 +109,134 @@ def print_reduced_form(equation):
     reduced_form = reduced_form[:-3] + ' = 0'
 
     print(reduced_form)
+    return reduced_form
+
+def print_polynomial_degree(reduced_form):
+    # Initialize an empty dictionary
+    polynomial = {}
+
+    # Find all terms in the reduced form
+    terms = re.findall(r'([+-]?\s*\d+(\.\d+)?)\s*\*\s*X\^(\d+)', reduced_form)
+
+    # Determine the degree of the polynomial
+    degree = max(int(exp) for coef, _, exp in terms)
+    polynomial['degree'] = degree
+    print(f"Polynomial degree: {degree}")
+
+    if degree > 2:
+        print("The polynomial degree is strictly greater than 2, I can't solve.")
+        return {}
+
+    # Extract a, b, and c from the terms
+    for coef, _, exp in terms:
+        coef = "".join(coef.split())
+        exp = int(exp)
+        coef = float(coef)
+        if exp == 0:
+            polynomial['c'] = coef
+        elif exp == 1:
+            polynomial['b'] = coef
+        elif exp == 2:
+            polynomial['a'] = coef
+
+    # Fill in any missing coefficients with 0
+    for var in ['a', 'b', 'c']:
+        if var not in polynomial:
+            polynomial[var] = 0.0
+
+    return polynomial
+
+def sqrt(n):
+    x = n
+    y = (x + 1) / 2
+
+    while abs(y - x) > 0.000001:
+        x = y
+        y = (x + n / x) / 2
+
+    return y
+
+def solve_polynomial_degree_1(polynomial):
+    b = polynomial['b']
+    c = polynomial['c']
+    
+    # bx + c = 0  =>  x = -c / b
+    solution = -c / b
+
+    # Simplify the solution as a fraction
+    gcd_value = gcd(-c, b)
+    simplified_solution = (-c // gcd_value, b // gcd_value)
+
+
+    solution = rounded_solution(solution)
+    print(f"The solution is:\n{solution}")
+    if (int(simplified_solution[1]) != 1):
+        print(f"As an irreducible fraction: {simplified_solution[0]}/{simplified_solution[1]}")
+
+
+def solve_polynomial_degree_2(polynomial):
+    a = polynomial['a']
+    b = polynomial['b']
+    c = polynomial['c']
+    
+    # Discriminant: b^2 - 4ac
+    discriminant = b**2 - 4*a*c
+
+    if discriminant > 0:
+        # Two solutions: (-b ± sqrt(discriminant)) / 2a
+        root_discriminant = sqrt(discriminant)
+        solution1 = (-b - root_discriminant) / (2*a)
+        solution2 = (-b + root_discriminant) / (2*a)
+
+        # Simplify the solutions as fractions
+        gcd_value1 = gcd(int(-b - root_discriminant), int(2*a))
+        simplified_solution1 = ((-b - root_discriminant) // gcd_value1, (2*a) // gcd_value1)
+
+        gcd_value2 = gcd(int(-b + root_discriminant), int(2*a))
+        simplified_solution2 = ((-b + root_discriminant) // gcd_value2, (2*a) // gcd_value2)
+
+        print(f"Discriminant is strictly positive ({discriminant}), the two solutions are:")
+
+        solution1 = rounded_solution(solution1)
+        solution2 = rounded_solution(solution2)
+
+
+        print(round(solution1, 4))
+        if (int(simplified_solution1[1]) != 1):
+            print(f"As an irreducible fraction: {simplified_solution1[0]}/{simplified_solution1[1]}")
+        print(round(solution2, 4))
+        if (int(simplified_solution2[1]) != 1):
+            print(f"As an irreducible fraction: {simplified_solution2[0]}/{simplified_solution2[1]}")
+
+    elif discriminant == 0:
+        # One solution: -b / 2a
+        solution = -b / (2*a)
+
+        # Simplify the solution as a fraction
+        gcd_value = gcd(-b, 2*a)
+        simplified_solution = (-b // gcd_value, (2*a) // gcd_value)
+
+
+        print(f"Discriminant is zero, the solution is:")
+        solution = rounded_solution(solution)
+        print(solution)
+        if (int(simplified_solution[1]) != 1):
+            print(f"As an irreducible fraction: {simplified_solution[0]}/{simplified_solution[1]}")
+
+    else:
+        # Discriminant is negative, no real solutions
+        print(f"Discriminant is strictly negative ({discriminant}), there are no real solutions.")
+
+
+
+
+def   solve_polynomial(polynomial):
+    degree = polynomial.get("degree")
+    if degree == 1:
+        solve_polynomial_degree_1(polynomial)
+    elif degree == 2:
+        solve_polynomial_degree_2(polynomial)
+    pass
 
 
 def main():
@@ -104,8 +245,10 @@ def main():
 
     logger.info(f'Solving equation: {equation}')
     # Here, you will add calls to your other functions for solving the polynomial
-    print_reduced_form(equation)
-
+    reduced_form = print_reduced_form(equation)
+    polynomial = print_polynomial_degree(reduced_form)
+    solve_polynomial(polynomial)
+    #print(polynomial)
 
 if __name__ == "__main__":
     main()
