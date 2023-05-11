@@ -38,7 +38,7 @@ def setup_logger():
 
     return logger
 
-
+'''
 def parse_args():
     parser = argparse.ArgumentParser(description='Polynomial Solver')
     parser.add_argument('equation', type=str, nargs='*', help='The polynomial equation to solve or "visual" for visual mode')
@@ -53,13 +53,51 @@ def parse_args():
             parser.error("Invalid polynomial equation. Please provide a valid polynomial equation.")
 
         # Extract exponents from the left side of the equation
-        left_side = equation.split('=')[0]
-        exponents = re.findall(r'X\^(\d+)', left_side)
+        #left_side = equation.split('=')[0]
+        #exponents = re.findall(r'X\^(\d+)', left_side)
 
         # Check if there are duplicate exponents
-        if len(exponents) != len(set(exponents)):
-            parser.error("Invalid polynomial equation. Each term on the left side of the equation must have a unique exponent.")
+        
+        #if len(exponents) != len(set(exponents)):
+        #    parser.error("Invalid polynomial equation. Each term on the left side of the equation must have a unique exponent.")
 
+    return equation
+'''
+'''
+def parse_args():
+    parser = argparse.ArgumentParser(description='Polynomial Solver')
+    parser.add_argument('equation', type=str, nargs='*', help='The polynomial equation to solve or "visual" for visual mode')
+    args = parser.parse_args()
+
+    if len(args.equation) != 1:
+        parser.error("Invalid number of arguments. Provide either a single polynomial equation or 'visual' to access visual mode.")
+
+    equation = ' '.join(args.equation)
+
+    if equation.lower() != 'visual':
+        # Adjusted regex to allow spaces around the caret (^) and also allow numbers without exponents
+        #if not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*(\*\s*X\s*\^\d+)?\s*)+=\s*([+-]?\s*\d+(\.\d+)?\s*(\*\s*X\s*\^\d+)?\s*)+$', equation):
+        if not re.match(r'^([+-]?\s*\d+(\.\d+)?(\s*\*\s*X(\s*\^\d+)?)?\s*)+=\s*([+-]?\s*\d+(\.\d+)?(\s*\*\s*X(\s*\^\d+)?)?\s*)+$', equation):
+            parser.error("Invalid polynomial equation. Please provide a valid polynomial equation.")
+
+    return equation
+
+'''
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Polynomial Solver')
+    parser.add_argument('equation', type=str, nargs='*', help='The polynomial equation to solve or "visual" for visual mode')
+    args = parser.parse_args()
+
+    if len(args.equation) != 1:
+        parser.error("Invalid number of arguments. Provide either a single polynomial equation or 'visual' to access visual mode.")
+
+    equation = ' '.join(args.equation)
+
+    if equation.lower() != 'visual':
+        # Adjusted regex to allow a term without an exponent, and to allow spaces around the caret (^)
+        if not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?\s*)+(=([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?\s*)+)$', equation):
+            parser.error("Invalid polynomial equation. Please provide a valid polynomial equation.")
     return equation
 
 def print_reduced_form(equation):
@@ -70,34 +108,41 @@ def print_reduced_form(equation):
     left_side, right_side = equation.split('=')
 
     # Split the sides into terms
-    left_terms = re.findall(r'([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+)', left_side)
-    right_terms = re.findall(r'([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+)', right_side)
-
+    left_terms = re.findall(r'([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?)', left_side)
+    right_terms = re.findall(r'([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?)', right_side)
+    
     # Parse left terms
-    for term in left_terms:
-        term = term[0]  # Convert the tuple to string
-        sign, coef, _, exp = re.findall(r'([+-])?\s*(\d+(\.\d+)?)\s*\*\s*X\^(\d+)', term.strip())[0]
+    for term_tuple in left_terms:
+        term = ''.join(term_tuple)
+        matches = re.findall(r'([+-])?\s*(\d+(\.\d+)?)(\s*\*\s*X(\s*\^)?\s*(\d+)?)?', term)
+        sign, coef, _, multiple_x, _, exp = matches[0] if len(matches[0]) == 6 else (*matches[0], None)
+        #Fix the case of 2 * X
+        if (multiple_x != '' and exp == ''):
+            exp = 1
         coef = float(coef)
-        exp = int(exp)
-
+        exp = int(exp) if exp else 0  # consider the case where exponent is not present (constant term)
+    
         if sign == '-':
             coef *= -1
-
+    
         # Add the coef to the corresponding exp in the terms dictionary
         terms[exp] = terms.get(exp, 0) + coef
-
+    
     # Parse right terms
-    for term in right_terms:
-        term = term[0]  # Convert the tuple to string
-        sign, coef, _, exp = re.findall(r'([+-])?\s*(\d+(\.\d+)?)\s*\*\s*X\^(\d+)', term.strip())[0]
+    for term_tuple in right_terms:
+        term = ''.join(term_tuple)
+        matches = re.findall(r'([+-])?\s*(\d+(\.\d+)?)(\s*\*\s*X(\s*\^)?\s*(\d+)?)?', term)
+        sign, coef, _, _, _, exp = matches[0] if len(matches[0]) == 6 else (*matches[0], None)
         coef = float(coef)
-        exp = int(exp)
-
+        exp = int(exp) if exp else 0  # consider the case where exponent is not present (constant term)
+    
         if sign != '-':
             coef *= -1
-
+    
         # Subtract the coef for the corresponding exp in the terms dictionary
         terms[exp] = terms.get(exp, 0) + coef
+    
+
 
     # Print the reduced form
     reduced_form = 'Reduced form: '
@@ -110,6 +155,8 @@ def print_reduced_form(equation):
 
     print(reduced_form)
     return reduced_form
+
+
 
 def print_polynomial_degree(reduced_form):
     # Initialize an empty dictionary
