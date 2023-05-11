@@ -3,7 +3,6 @@
 import re
 import argparse
 import logging
-import sys
 
 def rounded_solution(solution):
     rounded_value = round(solution, 4)
@@ -37,52 +36,6 @@ def setup_logger():
     logger.addHandler(f_handler)
 
     return logger
-
-'''
-def parse_args():
-    parser = argparse.ArgumentParser(description='Polynomial Solver')
-    parser.add_argument('equation', type=str, nargs='*', help='The polynomial equation to solve or "visual" for visual mode')
-    args = parser.parse_args()
-
-    if len(args.equation) != 1:
-        parser.error("Invalid number of arguments. Provide either a single polynomial equation or 'visual' to access visual mode.")
-
-    equation = ' '.join(args.equation)
-    if equation.lower() != 'visual':
-        if not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+\s*)+=\s*([+-]?\s*\d+(\.\d+)?\s*\*\s*X\^\d+\s*)+$', equation):
-            parser.error("Invalid polynomial equation. Please provide a valid polynomial equation.")
-
-        # Extract exponents from the left side of the equation
-        #left_side = equation.split('=')[0]
-        #exponents = re.findall(r'X\^(\d+)', left_side)
-
-        # Check if there are duplicate exponents
-        
-        #if len(exponents) != len(set(exponents)):
-        #    parser.error("Invalid polynomial equation. Each term on the left side of the equation must have a unique exponent.")
-
-    return equation
-'''
-'''
-def parse_args():
-    parser = argparse.ArgumentParser(description='Polynomial Solver')
-    parser.add_argument('equation', type=str, nargs='*', help='The polynomial equation to solve or "visual" for visual mode')
-    args = parser.parse_args()
-
-    if len(args.equation) != 1:
-        parser.error("Invalid number of arguments. Provide either a single polynomial equation or 'visual' to access visual mode.")
-
-    equation = ' '.join(args.equation)
-
-    if equation.lower() != 'visual':
-        # Adjusted regex to allow spaces around the caret (^) and also allow numbers without exponents
-        #if not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*(\*\s*X\s*\^\d+)?\s*)+=\s*([+-]?\s*\d+(\.\d+)?\s*(\*\s*X\s*\^\d+)?\s*)+$', equation):
-        if not re.match(r'^([+-]?\s*\d+(\.\d+)?(\s*\*\s*X(\s*\^\d+)?)?\s*)+=\s*([+-]?\s*\d+(\.\d+)?(\s*\*\s*X(\s*\^\d+)?)?\s*)+$', equation):
-            parser.error("Invalid polynomial equation. Please provide a valid polynomial equation.")
-
-    return equation
-
-'''
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Polynomial Solver')
