@@ -1,8 +1,58 @@
 #!/usr/bin/env python3
-
+import sys
 import re
 import argparse
-import logging
+import matplotlib.pyplot as plt
+import numpy as np
+import tkinter as tk
+from tkinter import simpledialog, messagebox
+
+
+def visual_mode():
+    while True:
+        # Create a simple dialog box for input
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        equation = simpledialog.askstring("Input", "Enter the polynomial equation:", parent=root)
+        
+        if equation is None:
+            sys.exit()
+
+        # Check if equation is valid
+        if equation is None or '=' not in equation or not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?\s*)+(=([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?\s*)+)$', equation):
+            messagebox.showerror("Error", "Invalid polynomial equation. Please provide a valid polynomial equation.")
+            continue
+
+        # Process the equation
+        reduced_form = print_reduced_form(equation)
+        polynomial = print_polynomial_degree(reduced_form)
+        solutions = solve_polynomial(polynomial)
+
+        if solutions is None:
+            messagebox.showinfo("Information", "The equation has no real solutions.")
+            continue
+
+        # Draw the graph
+        x = np.linspace(-10, 10, 400)
+        y = polynomial['a']*x**2 + polynomial['b']*x + polynomial['c']
+        plt.plot(x, y)
+        plt.title('Graph of the Polynomial')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.grid(True)
+        plt.axhline(0, color='black',linewidth=0.5)
+        plt.axvline(0, color='black',linewidth=0.5)
+        plt.grid(color = 'gray', linestyle = '--', linewidth = 0.5)
+
+        # Plot and annotate the solutions
+        for i, solution in enumerate(solutions):
+            print(i)
+            plt.plot(solution, 0, marker='o', color='red')
+            plt.text(solution, 0, f'{solutions[i]}', ha='right')
+
+        plt.show()
+        break
+
 
 def rounded_solution(solution):
     rounded_value = round(solution, 4)
@@ -17,25 +67,7 @@ def gcd(a, b):
     return a
 
 
-def setup_logger():
-    # Create a custom logger
-    logger = logging.getLogger(__name__)
 
-    # Set the level of the logger. This is SUPER USEFUL since it enables you to control what level of logging you want
-    logger.setLevel(logging.INFO)
-
-    # Create handlers
-    f_handler = logging.FileHandler('file.log')
-    f_handler.setLevel(logging.INFO)
-
-    # Create formatters and add it to handlers
-    f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    f_handler.setFormatter(f_format)
-
-    # Add handlers to the logger
-    logger.addHandler(f_handler)
-
-    return logger
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Polynomial Solver')
@@ -118,8 +150,14 @@ def print_polynomial_degree(reduced_form):
     # Find all terms in the reduced form
     terms = re.findall(r'([+-]?\s*\d+(\.\d+)?)\s*\*\s*X\^(\d+)', reduced_form)
 
+    # Check if there are any terms
+    if terms:
+        degree = max(int(exp) for coef, _, exp in terms)
+    else:
+        degree = 0
+
     # Determine the degree of the polynomial
-    degree = max(int(exp) for coef, _, exp in terms)
+    #degree = max(int(exp) for coef, _, exp in terms)
     polynomial['degree'] = degree
     print(f"Polynomial degree: {degree}")
 
@@ -167,38 +205,43 @@ def solve_polynomial_degree_1(polynomial):
     gcd_value = gcd(-c, b)
     simplified_solution = (-c // gcd_value, b // gcd_value)
 
-
     solution = rounded_solution(solution)
     print(f"The solution is:\n{solution}")
     if (int(simplified_solution[1]) != 1):
         print(f"As an irreducible fraction: {simplified_solution[0]}/{simplified_solution[1]}")
-
+    
+    return [solution]  # Return the solution as a list
 
 def solve_polynomial_degree_2(polynomial):
     a = polynomial['a']
     b = polynomial['b']
     c = polynomial['c']
     
-    # Discriminant: b^2 - 4ac
-    discriminant = b**2 - 4*a*c
+    # Calculate the discriminant
+    disc = b**2 - 4*a*c
 
-    if discriminant > 0:
-        # Two solutions: (-b ± sqrt(discriminant)) / 2a
-        root_discriminant = sqrt(discriminant)
-        solution1 = (-b - root_discriminant) / (2*a)
-        solution2 = (-b + root_discriminant) / (2*a)
+    if disc < 0:
+        print(f"Discriminant is strictly negative ({disc}), there are no real solutions.")
+        return []  # Return an empty list
+
+    elif disc == 0:
+        print("Discriminant is zero, the solution is:")
+        solution = -b / (2*a)
+        solution = rounded_solution(solution)
+        print(solution)
+        return [solution]  # Return the solution as a list
+
+    else:
+        print("Discriminant is strictly positive, the two solutions are:")
+        solution1 = ((-b + sqrt(disc)) / (2*a))
+        solution2 = ((-b - sqrt(disc)) / (2*a))
 
         # Simplify the solutions as fractions
-        gcd_value1 = gcd(int(-b - root_discriminant), int(2*a))
-        simplified_solution1 = ((-b - root_discriminant) // gcd_value1, (2*a) // gcd_value1)
+        gcd_value1 = gcd(int(-b - disc), int(2*a))
+        simplified_solution1 = ((-b - disc) // gcd_value1, (2*a) // gcd_value1)
 
-        gcd_value2 = gcd(int(-b + root_discriminant), int(2*a))
-        simplified_solution2 = ((-b + root_discriminant) // gcd_value2, (2*a) // gcd_value2)
-
-        print(f"Discriminant is strictly positive ({discriminant}), the two solutions are:")
-
-        solution1 = rounded_solution(solution1)
-        solution2 = rounded_solution(solution2)
+        gcd_value2 = gcd(int(-b + disc), int(2*a))
+        simplified_solution2 = ((-b + disc) // gcd_value2, (2*a) // gcd_value2)
 
 
         print(round(solution1, 4))
@@ -208,47 +251,37 @@ def solve_polynomial_degree_2(polynomial):
         if (int(simplified_solution2[1]) != 1):
             print(f"As an irreducible fraction: {simplified_solution2[0]}/{simplified_solution2[1]}")
 
-    elif discriminant == 0:
-        # One solution: -b / 2a
-        solution = -b / (2*a)
-
-        # Simplify the solution as a fraction
-        gcd_value = gcd(-b, 2*a)
-        simplified_solution = (-b // gcd_value, (2*a) // gcd_value)
-
-
-        print(f"Discriminant is zero, the solution is:")
-        solution = rounded_solution(solution)
-        print(solution)
-        if (int(simplified_solution[1]) != 1):
-            print(f"As an irreducible fraction: {simplified_solution[0]}/{simplified_solution[1]}")
-
-    else:
-        # Discriminant is negative, no real solutions
-        print(f"Discriminant is strictly negative ({discriminant}), there are no real solutions.")
+        return [solution1, solution2]  # Return solutions as a list
 
 
 
-
-def   solve_polynomial(polynomial):
-    degree = polynomial.get("degree")
-    if degree == 1:
-        solve_polynomial_degree_1(polynomial)
+def solve_polynomial(polynomial):
+    degree = polynomial['degree']
+    if degree == 0:
+        if polynomial['c'] == 0:
+            print("All real numbers are solution")
+        else:
+            print("There are no solutions")
+        return []
+    elif degree == 1:
+        return solve_polynomial_degree_1(polynomial)
     elif degree == 2:
-        solve_polynomial_degree_2(polynomial)
-    pass
+        return solve_polynomial_degree_2(polynomial)
+    else:
+        print("The polynomial degree is strictly greater than 2, I can't solve.")
+        return []
 
 
 def main():
-    logger = setup_logger()
     equation = parse_args()
 
-    logger.info(f'Solving equation: {equation}')
-    # Here, you will add calls to your other functions for solving the polynomial
-    reduced_form = print_reduced_form(equation)
-    polynomial = print_polynomial_degree(reduced_form)
-    solve_polynomial(polynomial)
-    #print(polynomial)
+    if equation.lower() == 'visual':
+        visual_mode()
+    else:
+        # Here, you will add calls to your other functions for solving the polynomial
+        reduced_form = print_reduced_form(equation)
+        polynomial = print_polynomial_degree(reduced_form)
+        solve_polynomial(polynomial)
 
 if __name__ == "__main__":
     main()
