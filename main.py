@@ -15,11 +15,12 @@ def visual_mode():
         root.withdraw()  # Hide the main window
         equation = simpledialog.askstring("Input", "Enter the polynomial equation:", parent=root)
         
+        print(equation)
         if equation is None:
             sys.exit()
 
         # Check if equation is valid
-        if equation is None or '=' not in equation or not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?\s*)+(=([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?\s*)+)$', equation):
+        if '=' not in equation or not re.match(r'^([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?\s*)+(=([+-]?\s*\d+(\.\d+)?\s*(\*\s*X(\s*\^\s*\d+)?)?\s*)+)$', equation):
             messagebox.showerror("Error", "Invalid polynomial equation. Please provide a valid polynomial equation.")
             continue
 
@@ -27,6 +28,9 @@ def visual_mode():
         reduced_form = print_reduced_form(equation)
         polynomial = print_polynomial_degree(reduced_form)
         solutions = solve_polynomial(polynomial)
+
+        if polynomial["degree"] > 2:
+            return
 
         if solutions is None:
             messagebox.showinfo("Information", "The equation has no real solutions.")
@@ -162,8 +166,7 @@ def print_polynomial_degree(reduced_form):
     print(f"Polynomial degree: {degree}")
 
     if degree > 2:
-        print("The polynomial degree is strictly greater than 2, I can't solve.")
-        return {}
+        return polynomial
 
     # Extract a, b, and c from the terms
     for coef, _, exp in terms:
